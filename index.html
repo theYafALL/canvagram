@@ -6,6 +6,10 @@
 <title>Canvagram</title>
 <meta name="description" content="Short videos from YouTube Shorts, TikTok and Instagram Reels on one endless grid you can swipe in any direction.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://www.youtube.com">
+<link rel="preconnect" href="https://i.ytimg.com">
+<link rel="preconnect" href="https://www.google.com">
+<link rel="preconnect" href="https://www.tiktok.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
 <style>
 :root{
@@ -32,7 +36,8 @@ button{font:inherit;color:inherit}
 .tile{position:absolute;inset:0;overflow:hidden;background:linear-gradient(160deg,var(--a),var(--b))}
 .thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(1.1)}
 .thumb-blur{position:absolute;inset:-20px;width:calc(100% + 40px);height:calc(100% + 40px);object-fit:cover;filter:blur(24px) brightness(.6)}
-.player{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
+.player{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;opacity:0;transition:opacity .25s}
+.player.ready{opacity:1}
 .ph{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px}
 .ph b{font-family:var(--display);font-weight:800;font-size:clamp(34px,11vw,56px);line-height:.95;letter-spacing:-.02em;text-wrap:balance}
 .ph small{display:block;margin-top:10px;font:500 12px var(--mono);color:rgba(255,255,255,.75)}
@@ -140,28 +145,30 @@ button{font:inherit;color:inherit}
 
 <script>
 /* Starter list everyone sees when the link has no ?v= list. Accepts full links or y:ID / t:ID / i:CODE.
-   Found via web search on 2026-11-03; a few may be removed or block embedding over time. */
+   Found via web search on 2026-11-03 (Reels from a cupofjo.com roundup); a few may be removed or block embedding over time. */
 const DEFAULT_LINKS = [
-  'y:99jujUazHZY', 'y:PfrqdnsggjU', 'y:8K0b3aVGGUk', 't:7429924872454769951', 'y:T0ITJt_6CPA', 't:7377380264403684650',
-  'y:enLQlTMXVGE', 'y:dRSsc8npnqU', 'y:jeaPVhp2aKk', 'y:q_2lLod0kKE', 'y:KwZpYLrRR3o', 'y:DkfWSgF_k4Y',
-  'y:gk90aNvGXgs', 'y:XN9Ln5c0UvQ', 'y:S0oxDNxg3Po', 'y:puzI2oB2XjU', 'y:VyAOB-X6wgk', 'y:wVQrh5A8C6g',
-  'y:q0lutuj76ts', 'y:A4sQ3LCmUKU', 'y:FvahTVvzNDU', 'y:9ZtV2alTjdg', 'y:0naj4fw3yEY', 'y:JXqfZVM9CCk',
-  't:7375281998912490798', 'y:JAaT_eO182Q', 'y:iU9ymCkOpls', 'y:DOoooYs9d2M', 'y:WSvRrANHG9g', 'y:Zq_hbllja6E',
-  'y:K4nMGOFj0yY', 't:7588205102926761247', 't:7521067006234299678', 'y:MO_ctioen_s', 'y:EXueS4q1LGE', 'y:z5s4zTu6DP0',
-  't:7341470837029047595', 'y:3u5w_D2MeXM', 'y:9N21pb2sHno', 'y:9XOnh7sHS9Q', 'y:vGisUB7yz38', 'y:gV8VvJpNjCU',
-  'y:cYr5lQbmQ7I', 'y:NgSBLMjDPSg', 'y:ETwRGo9RpHI', 'y:kQ7wDHRzSfg', 'y:ExtHCWofnIE', 'y:dJH-K_uLGWk',
-  'y:Elmk3Jm7s6Y', 'y:bD8y25DX3J8', 'y:sLciensaBI4', 'y:QA-9-g7shdY', 't:7430114858445671722', 'y:4DmYAQ_tSws',
-  'y:zgjto-sw0HI', 'y:CSANojnv4Nk', 'y:Sx3vlF_rXBU', 'y:EwJ00RcpcdY', 'y:ZvzTC4MWy7w', 'y:CSNtbiHSsOk',
-  'y:c3_q5sz3R1s', 'y:z2iDzfmH6Yw', 'y:NtkhYL05Luc', 'y:K0Hm38ufMB0', 'y:gnlU-zE28rU', 'y:lWSyIPrxaKg',
-  't:7692097714263182625', 'y:MgpdT8YCzWE', 'y:qablW71wa0E', 'y:IQ6_UKE0gnc', 'y:FsWL-Usv9Vo', 'y:82FcszGAVu0',
-  'y:GzBvLodjsq8', 'y:4VoFs8US7qI', 'y:Yfn7g7ftk7Y', 'y:s54-cbheuUU', 'y:hh2w_MYwS28', 'y:0HVbVGq2C1o',
-  'y:XsACZn8rIoU', 'y:cfKQCQ9LT50', 'y:czodw2xl-M4', 'y:x9pEJtMsKcY', 'y:jnHFWcCdyio', 't:7475215588571286814',
-  't:7487014060903402782', 'y:snIeRZG8MeA', 'y:rc2VZIl7pQw', 'y:FFADS64-0wo', 'y:6Tzv6zF4mp8', 'y:Qn-uN1YjtFE',
-  'y:ntDaGCxVcfc', 'y:6eMt42oIWpo', 'y:3e7GJU9m8KY', 'y:cnPAcwl0sm4', 'y:QwtnBxrlaxg', 'y:m6hpFWAp75A',
-  'y:2UNTeEAt51U', 'y:eoklkoLnTXI', 'y:jqwZj6rmzOs', 'y:KJcU40drD4k', 'y:Nuk3derFSlw', 'y:77XUBE7Z4F0',
-  'y:htmVEH2TMGM', 'y:e-7Glg4FJQw', 'y:ZEtC_WsmvVY', 'y:R-z8A8U_bw4', 'y:jRERHyh-PG4', 'y:7c7vvNBLIAQ',
-  'y:T7LKZBQi7Js', 'y:NjZ1YEK_fv0', 'y:UiC6lC0Iob4', 'y:imihQht9Y1s', 'y:lDHu0x3fiyw', 'y:_Vw16Yc5-_s',
-  'y:hJ3InzJJpYw', 'y:EioOXLJalQg', 'y:Mhl0nbv0n9o', 'y:wkLHzw-9ceU',
+  'y:99jujUazHZY', 'y:PfrqdnsggjU', 'y:8K0b3aVGGUk', 't:7429924872454769951', 'y:T0ITJt_6CPA', 'i:ClCBgngDFJz',
+  't:7377380264403684650', 'y:enLQlTMXVGE', 'y:dRSsc8npnqU', 'y:jeaPVhp2aKk', 'y:q_2lLod0kKE', 'y:KwZpYLrRR3o',
+  'y:DkfWSgF_k4Y', 'y:gk90aNvGXgs', 'y:XN9Ln5c0UvQ', 'y:S0oxDNxg3Po', 'i:ClEliwnjQPg', 'y:puzI2oB2XjU',
+  'y:VyAOB-X6wgk', 'y:wVQrh5A8C6g', 'y:q0lutuj76ts', 'y:A4sQ3LCmUKU', 'y:FvahTVvzNDU', 'y:9ZtV2alTjdg',
+  'y:0naj4fw3yEY', 'y:JXqfZVM9CCk', 't:7375281998912490798', 'i:ClyxXe8DbFw', 'y:JAaT_eO182Q', 'y:iU9ymCkOpls',
+  'y:DOoooYs9d2M', 'y:WSvRrANHG9g', 'y:Zq_hbllja6E', 'y:K4nMGOFj0yY', 't:7588205102926761247', 't:7521067006234299678',
+  'y:MO_ctioen_s', 'y:EXueS4q1LGE', 'i:Cj3Ewiyj8ob', 'y:z5s4zTu6DP0', 't:7341470837029047595', 'y:3u5w_D2MeXM',
+  'y:9N21pb2sHno', 'y:9XOnh7sHS9Q', 'y:vGisUB7yz38', 'y:gV8VvJpNjCU', 'y:cYr5lQbmQ7I', 'y:NgSBLMjDPSg',
+  'y:ETwRGo9RpHI', 'i:CSWbw1VjdpZ', 'y:kQ7wDHRzSfg', 'y:ExtHCWofnIE', 'y:dJH-K_uLGWk', 'y:Elmk3Jm7s6Y',
+  'y:bD8y25DX3J8', 'y:sLciensaBI4', 'y:QA-9-g7shdY', 't:7430114858445671722', 'y:4DmYAQ_tSws', 'y:zgjto-sw0HI',
+  'i:Ck4YrbVgPil', 'y:CSANojnv4Nk', 'y:Sx3vlF_rXBU', 'y:EwJ00RcpcdY', 'y:ZvzTC4MWy7w', 'y:CSNtbiHSsOk',
+  'y:c3_q5sz3R1s', 'y:z2iDzfmH6Yw', 'y:NtkhYL05Luc', 'y:K0Hm38ufMB0', 'y:gnlU-zE28rU', 'i:CjvfWGXDunV',
+  'y:lWSyIPrxaKg', 't:7692097714263182625', 'y:MgpdT8YCzWE', 'y:qablW71wa0E', 'y:IQ6_UKE0gnc', 'y:FsWL-Usv9Vo',
+  'y:82FcszGAVu0', 'y:GzBvLodjsq8', 'y:4VoFs8US7qI', 'y:Yfn7g7ftk7Y', 'i:CjIxp9GAbag', 'y:s54-cbheuUU',
+  'y:hh2w_MYwS28', 'y:0HVbVGq2C1o', 'y:XsACZn8rIoU', 'y:cfKQCQ9LT50', 'y:czodw2xl-M4', 'y:x9pEJtMsKcY',
+  'y:jnHFWcCdyio', 't:7475215588571286814', 't:7487014060903402782', 'i:CKz8SnSjICc', 'y:snIeRZG8MeA', 'y:rc2VZIl7pQw',
+  'y:FFADS64-0wo', 'y:6Tzv6zF4mp8', 'y:Qn-uN1YjtFE', 'y:ntDaGCxVcfc', 'y:6eMt42oIWpo', 'y:3e7GJU9m8KY',
+  'y:cnPAcwl0sm4', 'y:QwtnBxrlaxg', 'i:CndbH81gxUd', 'y:m6hpFWAp75A', 'y:2UNTeEAt51U', 'y:eoklkoLnTXI',
+  'y:jqwZj6rmzOs', 'y:KJcU40drD4k', 'y:Nuk3derFSlw', 'y:77XUBE7Z4F0', 'y:htmVEH2TMGM', 'y:e-7Glg4FJQw',
+  'y:ZEtC_WsmvVY', 'i:Cnf2lgROROT', 'y:R-z8A8U_bw4', 'y:jRERHyh-PG4', 'y:7c7vvNBLIAQ', 'y:T7LKZBQi7Js',
+  'y:NjZ1YEK_fv0', 'y:UiC6lC0Iob4', 'y:imihQht9Y1s', 'y:lDHu0x3fiyw', 'y:_Vw16Yc5-_s', 'y:hJ3InzJJpYw',
+  'y:EioOXLJalQg', 'y:Mhl0nbv0n9o', 'y:wkLHzw-9ceU',
 ];
 
 (() => {
@@ -189,9 +196,10 @@ const DEFAULT_LINKS = [
   const token = v => v.p + ':' + v.id;
   const linkOf = v => v.p === 'y' ? `https://www.youtube.com/shorts/${v.id}` : v.p === 't' ? `https://www.tiktok.com/@/video/${v.id}` : `https://www.instagram.com/reel/${v.id}/`;
   const thumbOf = v => v.p === 'y' ? `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg` : null;
-  function embedOf(v, sound) {
-    if (v.p === 'y') return `https://www.youtube.com/embed/${v.id}?autoplay=1&mute=${sound ? 0 : 1}&playsinline=1&loop=1&playlist=${v.id}&controls=0&rel=0&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
-    if (v.p === 't') return `https://www.tiktok.com/player/v1/${v.id}?autoplay=1&loop=1&music_info=1&description=1&rel=0&controls=1&progress_bar=1`;
+  function embedOf(v, sound, auto) {
+    const ap = auto ? 1 : 0;
+    if (v.p === 'y') return `https://www.youtube.com/embed/${v.id}?autoplay=${ap}&mute=${sound ? 0 : 1}&playsinline=1&loop=1&playlist=${v.id}&controls=0&rel=0&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
+    if (v.p === 't') return `https://www.tiktok.com/player/v1/${v.id}?autoplay=${ap}&loop=1&music_info=1&description=1&rel=0&controls=1&progress_bar=1`;
     return `https://www.instagram.com/reel/${v.id}/embed/`;
   }
 
@@ -212,36 +220,97 @@ const DEFAULT_LINKS = [
   let cx = 0, cy = 0, busy = false, firstMove = true, sound = false, paused = false;
   const visited = new Set(['0,0']);
 
-  function makeTile(x, y, live) {
+  // Tiles persist across moves, so the clip you swipe to has usually been loading in the background.
+  const tiles = new Map(); // "x,y" -> { el, v, frame, loaded, timer }
+  const keyOf = (x, y) => x + ',' + y;
+
+  function makeTile(x, y) {
     const v = videoAt(x, y), [a, b] = palAt(x, y);
     const el = document.createElement('div');
     el.className = 'tile';
     el.style.setProperty('--a', a); el.style.setProperty('--b', b);
     if (!v) {
       el.innerHTML = `<div class="ph"><div><b>Add some videos</b><small>tap the list button · (${x}, ${-y})</small></div></div>`;
-      return el;
+      return { el, v: null };
     }
     const P = PLATFORMS[v.p];
     el.style.setProperty('--p', P.color);
     const t = thumbOf(v);
-    let inner = t ? `<img class="thumb-blur" src="${t}" alt=""><img class="thumb" src="${t}" alt="" style="object-fit:contain">`
-                  : `<div class="ph"><div><b>${P.name}</b><small>loads when you land here</small></div></div>`;
-    if (live) inner += `<iframe class="player" src="${embedOf(v, sound)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="${P.site} video"></iframe>`;
-    el.innerHTML = inner + `<div class="badge">${P.name}</div>`;
-    return el;
+    el.innerHTML = (t ? `<img class="thumb-blur" src="${t}" alt=""><img class="thumb" src="${t}" alt="" style="object-fit:contain">`
+                      : `<div class="ph"><div><b>${P.name}</b><small>loading…</small></div></div>`) + `<div class="badge">${P.name}</div>`;
+    return { el, v };
   }
 
+  function attachPlayer(t, live) {
+    if (!t.v || t.frame) return;
+    const P = PLATFORMS[t.v.p];
+    const f = document.createElement('iframe');
+    f.className = 'player';
+    f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+    f.title = P.site + ' video';
+    f.src = embedOf(t.v, live && sound, live);
+    f.addEventListener('load', () => {
+      t.loaded = true; f.classList.add('ready');
+      if (t.el.classList.contains('live')) wake(t); else send(t, 'pause');
+    });
+    t.frame = f;
+    t.el.insertBefore(f, t.el.querySelector('.badge'));
+  }
+
+  function send(t, kind) {
+    if (!t || !t.frame || !t.loaded) return;
+    try {
+      const w = t.frame.contentWindow;
+      if (t.v.p === 'y') {
+        const func = { play: 'playVideo', pause: 'pauseVideo', mute: 'mute', unmute: 'unMute' }[kind];
+        if (func) w.postMessage(JSON.stringify({ event: 'command', func, args: [] }), '*');
+        if (kind === 'restart') { w.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [0, true] }), '*'); w.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'); }
+      } else if (t.v.p === 't') {
+        w.postMessage({ type: kind === 'unmute' ? 'unMute' : kind === 'restart' ? 'play' : kind, 'x-tiktok-player': true }, '*');
+      }
+    } catch (e) {}
+  }
+  // Start the live clip; repeat a couple of times because players can ignore the very first message.
+  function wake(t, restart = true) {
+    if (!t) return;
+    clearTimeout(t.timer);
+    const go = n => {
+      if (!t.el.classList.contains('live')) return;
+      send(t, sound ? 'unmute' : 'mute'); send(t, restart && n === 2 ? 'restart' : 'play');
+      if (n) t.timer = setTimeout(() => go(n - 1), 600);
+    };
+    go(2);
+  }
+  function sleep(t) { clearTimeout(t.timer); send(t, 'mute'); send(t, 'pause'); }
+  const liveTile = () => tiles.get(keyOf(cx, cy));
+  function cmd(kind) { const t = liveTile(); if (kind === 'play') wake(t, false); else send(t, kind); }
+
+  let preloadT = [];
   function build() {
     grid.style.transition = 'none';
     grid.style.transform = 'translate(0px,0px)';
-    grid.textContent = '';
+    const want = new Set();
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const k = keyOf(cx + dx, cy + dy);
+      want.add(k);
+      let t = tiles.get(k);
+      if (!t) { t = makeTile(cx + dx, cy + dy); tiles.set(k, t); grid.appendChild(t.el); }
+      t.el.style.transform = `translate(${dx * 100}%,${dy * 100}%)`;
       const live = !dx && !dy;
-      const t = makeTile(cx + dx, cy + dy, live);
-      t.style.transform = `translate(${dx * 100}%,${dy * 100}%)`;
-      if (live) t.classList.add('live');
-      grid.appendChild(t);
+      const was = t.el.classList.contains('live');
+      t.el.classList.toggle('live', live);
+      if (live) { if (t.frame) { if (!was) wake(t); } else attachPlayer(t, true); }
+      else if (was) sleep(t);
     }
+    for (const [k, t] of tiles) if (!want.has(k)) { clearTimeout(t.timer); t.el.remove(); tiles.delete(k); }
+
+    // Warm up neighbours: straight moves first, diagonals a bit later, so the live clip gets bandwidth first.
+    preloadT.forEach(clearTimeout);
+    preloadT = [
+      setTimeout(() => [[0, 1], [0, -1], [1, 0], [-1, 0]].forEach(([dx, dy]) => { const t = tiles.get(keyOf(cx + dx, cy + dy)); if (t) attachPlayer(t, false); }), 300),
+      setTimeout(() => [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(([dx, dy]) => { const t = tiles.get(keyOf(cx + dx, cy + dy)); if (t) attachPlayer(t, false); }), 1200),
+    ];
+
     paused = false;
     drawMap();
     $('coords').textContent = `x ${cx} · y ${-cy} · ${visited.size} seen · ${videos.length} videos`;
@@ -249,6 +318,7 @@ const DEFAULT_LINKS = [
     const open = $('openBtn');
     if (v) { open.href = linkOf(v); open.hidden = false; } else open.hidden = true;
   }
+  function resetTiles() { for (const t of tiles.values()) { clearTimeout(t.timer); t.el.remove(); } tiles.clear(); }
 
   function drawMap() {
     const map = $('map'); map.textContent = '';
@@ -259,20 +329,6 @@ const DEFAULT_LINKS = [
       if (!dx && !dy) i.classList.add('here');
       map.appendChild(i);
     }
-  }
-
-  // ---------- player control (YouTube and TikTok listen to postMessage) ----------
-  function cmd(kind) {
-    const f = grid.querySelector('.tile.live iframe'); if (!f) return;
-    const v = videoAt(cx, cy);
-    try {
-      if (v.p === 'y') {
-        const func = { play: 'playVideo', pause: 'pauseVideo', mute: 'mute', unmute: 'unMute' }[kind];
-        f.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: [] }), '*');
-      } else if (v.p === 't') {
-        f.contentWindow.postMessage({ type: kind === 'unmute' ? 'unMute' : kind, 'x-tiktok-player': true }, '*');
-      }
-    } catch (e) {}
   }
 
   let toastT;
@@ -326,6 +382,8 @@ const DEFAULT_LINKS = [
     const now = performance.now();
     if (now - lastTap < 300) { clearTimeout(tapT); lastTap = 0; heart(e); return; }
     lastTap = now;
+    const lt = liveTile();
+    if (lt && lt.v && lt.v.p === 'i') { tapT = setTimeout(() => { setTouching(true); toast('tap the reel to play · hand button to swipe again'); }, 300); return; }
     tapT = setTimeout(() => { paused = !paused; cmd(paused ? 'pause' : 'play'); toast(paused ? 'paused' : 'playing'); }, 300);
   }
   function heart(e) {
@@ -381,7 +439,7 @@ const DEFAULT_LINKS = [
   function shareUrl(list) { const u = new URL(location.href); u.search = list.length ? '?v=' + list.map(token).join(',') : ''; u.hash = ''; return u.toString(); }
   $('saveBtn').addEventListener('click', () => {
     const good = renderChips();
-    videos = good; cx = cy = 0; visited.clear(); visited.add('0,0');
+    videos = good; resetTiles(); cx = cy = 0; visited.clear(); visited.add('0,0');
     history.replaceState(null, '', shareUrl(videos));
     panel.hidden = true; build();
     toast(`${videos.length} videos loaded`);
@@ -395,8 +453,7 @@ const DEFAULT_LINKS = [
   // compass rose
   for (let i = 0; i < 8; i++) { const b = document.createElement('b'); b.style.setProperty('--r', i * 45 + 'deg'); b.style.setProperty('--i', i); $('rose').appendChild(b); }
 
-  window.addEventListener('resize', () => { if (!busy) build(); });
-  build();
+    build();
   if (!videos.length) openPanel();
 })();
 </script>
