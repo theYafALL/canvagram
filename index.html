@@ -38,6 +38,14 @@ button{font:inherit;color:inherit}
 .thumb-blur{position:absolute;inset:-20px;width:calc(100% + 40px);height:calc(100% + 40px);object-fit:cover;filter:blur(24px) brightness(.6)}
 .player{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;opacity:0;transition:opacity .25s}
 .player.ready{opacity:1}
+.thumb{object-fit:contain}
+.loader{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:12px;pointer-events:none;transition:opacity .25s;z-index:1}
+.loader i{width:54px;height:54px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:var(--p);animation:spin .8s linear infinite}
+.loader span{font:700 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--p);background:rgba(0,0,0,.5);padding:4px 8px;border-radius:5px}
+.tile.playing .loader{opacity:0}
+.tile:not(.live) .loader i{animation-play-state:paused}
+.tile.broken::after{content:"This clip can't play here · swipe on";position:absolute;inset:auto 0 45%;text-align:center;font:700 13px var(--mono);z-index:2}
+@keyframes spin{to{transform:rotate(360deg)}}
 .ph{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px}
 .ph b{font-family:var(--display);font-weight:800;font-size:clamp(34px,11vw,56px);line-height:.95;letter-spacing:-.02em;text-wrap:balance}
 .ph small{display:block;margin-top:10px;font:500 12px var(--mono);color:rgba(255,255,255,.75)}
@@ -94,7 +102,7 @@ button{font:inherit;color:inherit}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chips span{font:700 11px var(--mono);padding:5px 8px;border-radius:6px;background:var(--panel);color:var(--p)}
 
-@media (prefers-reduced-motion:reduce){.rose b,.burst{animation:none}}
+@media (prefers-reduced-motion:reduce){.rose b,.burst{animation:none}.loader i{animation-duration:2.4s}}
 </style>
 </head>
 <body>
@@ -145,7 +153,7 @@ button{font:inherit;color:inherit}
 
 <script>
 /* Starter list everyone sees when the link has no ?v= list. Accepts full links or y:ID / t:ID / i:CODE.
-   Found via web search on 2026-11-03 (Reels from a cupofjo.com roundup); a few may be removed or block embedding over time. */
+   Found via web search on 2026-11-03 (Reels from a cupofjo.com roundup and Wikipedia's most-viewed Reels list); a few may be removed or block embedding over time. */
 const DEFAULT_LINKS = [
   'y:99jujUazHZY', 'y:PfrqdnsggjU', 'y:8K0b3aVGGUk', 't:7429924872454769951', 'y:T0ITJt_6CPA', 'i:ClCBgngDFJz',
   't:7377380264403684650', 'y:enLQlTMXVGE', 'y:dRSsc8npnqU', 'y:jeaPVhp2aKk', 'y:q_2lLod0kKE', 'y:KwZpYLrRR3o',
@@ -168,7 +176,14 @@ const DEFAULT_LINKS = [
   'y:jqwZj6rmzOs', 'y:KJcU40drD4k', 'y:Nuk3derFSlw', 'y:77XUBE7Z4F0', 'y:htmVEH2TMGM', 'y:e-7Glg4FJQw',
   'y:ZEtC_WsmvVY', 'i:Cnf2lgROROT', 'y:R-z8A8U_bw4', 'y:jRERHyh-PG4', 'y:7c7vvNBLIAQ', 'y:T7LKZBQi7Js',
   'y:NjZ1YEK_fv0', 'y:UiC6lC0Iob4', 'y:imihQht9Y1s', 'y:lDHu0x3fiyw', 'y:_Vw16Yc5-_s', 'y:hJ3InzJJpYw',
-  'y:EioOXLJalQg', 'y:Mhl0nbv0n9o', 'y:wkLHzw-9ceU',
+  'y:EioOXLJalQg', 'y:Mhl0nbv0n9o', 'y:wkLHzw-9ceU', 't:7336288780355194154', 't:7426451521660882207', 't:7486153416574586154',
+  't:7488388419421244702', 't:7486882064218737950', 't:7253810465439059227', 't:7263547744109759786', 't:7479209674911288606', 't:7536612168301661462',
+  't:7274955766329625857', 't:7286409570681982241', 't:7644335026066165023', 't:7532699105513049399', 't:7642066611087740174', 't:7492473396576455978',
+  't:7485783045367155998', 't:7511093713527999766', 't:7447511467202596114', 't:7431512654700760362', 't:7352558079365451041', 't:7274154886365760801',
+  't:7321831073527221550', 't:7324390663238225184', 't:7482809247219060010', 't:7539959636829490462', 't:7390863265670139169', 't:7495702681252678955',
+  'i:DKw2J6TMZd7', 'i:DPL6xC_jJQU', 'i:DXs1enKiA1A', 'i:DZaO__gO0rz', 'i:DMmxU4bKcsR', 'i:DGyFM8jq-va',
+  'i:DPd8KODDA4d', 'i:C8CaBfWs1mr', 'i:DOuM2pFiEsz', 'i:DIdUQ4eMLt6', 'i:DN-lJPxEX-d', 'i:DUJEsU3iE5C',
+  'i:DQCkNLtgqEe', 'i:Da6DPjrsSgB', 'i:DKcalTzoftf', 'i:DOJukicCQ2_',
 ];
 
 (() => {
@@ -211,18 +226,35 @@ const DEFAULT_LINKS = [
   let videos = loadList();
 
   // ---------- grid mapping ----------
-  // A lattice so every step (straight or diagonal) lands on a different video when the list is big enough.
+  // Platforms rotate so TikTok, Shorts and Reels each take a third of the grid,
+  // and no straight move lands on the same platform twice in a row.
   const mod = (a, n) => ((a % n) + n) % n;
-  const idxAt = (x, y) => mod(x * 3 + y * 7, videos.length);
-  const videoAt = (x, y) => videos.length ? videos[idxAt(x, y)] : null;
+  let byP = {}, order = [];
+  function indexVideos() {
+    byP = { t: [], y: [], i: [] };
+    videos.forEach(v => byP[v.p].push(v));
+    order = ['t', 'y', 'i'].filter(p => byP[p].length);
+  }
+  indexVideos();
+  function videoAt(x, y) {
+    if (!order.length) return null;
+    const list = byP[order[mod(x + 2 * y, order.length)]];
+    return list[mod(x * 7 + y * 13, list.length)];
+  }
   const palAt = (x, y) => PALETTES[mod(x * 5 + y * 11, PALETTES.length)];
 
   let cx = 0, cy = 0, busy = false, firstMove = true, sound = false, paused = false;
   const visited = new Set(['0,0']);
 
-  // Tiles persist across moves, so the clip you swipe to has usually been loading in the background.
-  const tiles = new Map(); // "x,y" -> { el, v, frame, loaded, timer }
+  // ---------- YouTube player API (lets neighbours buffer silently, then pause at 0:00) ----------
+  let ytReady = false; const ytWait = [];
+  window.onYouTubeIframeAPIReady = () => { ytReady = true; ytWait.splice(0).forEach(fn => fn()); };
+  { const sc = document.createElement('script'); sc.src = 'https://www.youtube.com/iframe_api'; sc.async = true; document.head.appendChild(sc); }
+
+  // Tiles persist across moves, so the clip you swipe to is already buffered.
+  const tiles = new Map(); // "x,y" -> { el, v, frame, yt, ready, timer }
   const keyOf = (x, y) => x + ',' + y;
+  const isLive = t => t.el.classList.contains('live');
 
   function makeTile(x, y) {
     const v = videoAt(x, y), [a, b] = palAt(x, y);
@@ -235,55 +267,96 @@ const DEFAULT_LINKS = [
     }
     const P = PLATFORMS[v.p];
     el.style.setProperty('--p', P.color);
-    const t = thumbOf(v);
-    el.innerHTML = (t ? `<img class="thumb-blur" src="${t}" alt=""><img class="thumb" src="${t}" alt="" style="object-fit:contain">`
-                      : `<div class="ph"><div><b>${P.name}</b><small>loading…</small></div></div>`) + `<div class="badge">${P.name}</div>`;
+    const th = thumbOf(v);
+    el.innerHTML = (th ? `<img class="thumb-blur" src="${th}" alt=""><img class="thumb" src="${th}" alt="">` : '')
+      + `<div class="loader" aria-hidden="true"><i></i><span>${P.name}</span></div><div class="badge">${P.name}</div>`;
     return { el, v };
   }
 
-  function attachPlayer(t, live) {
-    if (!t.v || t.frame) return;
+  function markPlaying(t, on) { t.el.classList.toggle('playing', on); }
+
+  function attachPlayer(t) {
+    if (!t.v || t.frame || t.pending) return;
     const P = PLATFORMS[t.v.p];
+    if (t.v.p === 'y') {
+      if (!ytReady) { t.pending = true; ytWait.push(() => { t.pending = false; if (t.el.isConnected) attachPlayer(t); }); return; }
+      const host = document.createElement('div');
+      t.el.insertBefore(host, t.el.querySelector('.loader'));
+      t.yt = new YT.Player(host, {
+        videoId: t.v.id, width: '100%', height: '100%',
+        playerVars: { autoplay: 1, mute: 1, playsinline: 1, controls: 0, rel: 0, loop: 1, playlist: t.v.id, modestbranding: 1, iv_load_policy: 3, fs: 0, disablekb: 1 },
+        events: {
+          onReady: () => {
+            t.ready = true; t.frame.classList.add('ready');
+            if (isLive(t)) wake(t); else { t.yt.mute(); t.yt.playVideo(); } // buffer a few seconds
+          },
+          onStateChange: e => {
+            if (e.data === YT.PlayerState.PLAYING) {
+              if (isLive(t)) markPlaying(t, true);
+              else if (!t.warm) { t.warm = true; t.yt.pauseVideo(); t.yt.seekTo(0, true); }
+              else t.yt.pauseVideo();
+            } else if (e.data === YT.PlayerState.BUFFERING && isLive(t)) markPlaying(t, false);
+          },
+          onError: () => { t.el.classList.add('broken'); markPlaying(t, true); },
+        },
+      });
+      t.frame = t.yt.getIframe();
+      t.frame.classList.add('player');
+      return;
+    }
     const f = document.createElement('iframe');
     f.className = 'player';
     f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
     f.title = P.site + ' video';
-    f.src = embedOf(t.v, live && sound, live);
+    f.src = embedOf(t.v, false, isLive(t));
     f.addEventListener('load', () => {
-      t.loaded = true; f.classList.add('ready');
-      if (t.el.classList.contains('live')) wake(t); else send(t, 'pause');
+      t.ready = true; f.classList.add('ready');
+      if (t.v.p === 'i') { markPlaying(t, true); return; }
+      if (isLive(t)) wake(t);
+      else { tk(t, 'mute'); tk(t, 'play'); t.timer = setTimeout(() => { if (!isLive(t)) { tk(t, 'pause'); tk(t, 'seekTo', 0); } }, 1200); }
     });
     t.frame = f;
-    t.el.insertBefore(f, t.el.querySelector('.badge'));
+    t.el.insertBefore(f, t.el.querySelector('.loader'));
   }
 
+  function tk(t, type, value) {
+    try { t.frame.contentWindow.postMessage(value === undefined ? { type, 'x-tiktok-player': true } : { type, value, 'x-tiktok-player': true }, '*'); } catch (e) {}
+  }
+  // TikTok's player reports its state back; use it to hide the loader.
+  window.addEventListener('message', e => {
+    const d = e.data;
+    if (!d || typeof d !== 'object' || !d['x-tiktok-player']) return;
+    for (const t of tiles.values()) if (t.frame && t.frame.contentWindow === e.source) {
+      if (d.type === 'onStateChange' && isLive(t)) markPlaying(t, d.value === 1);
+      if (d.type === 'onPlayerReady' && isLive(t)) wake(t);
+    }
+  });
+
   function send(t, kind) {
-    if (!t || !t.frame || !t.loaded) return;
-    try {
-      const w = t.frame.contentWindow;
-      if (t.v.p === 'y') {
-        const func = { play: 'playVideo', pause: 'pauseVideo', mute: 'mute', unmute: 'unMute' }[kind];
-        if (func) w.postMessage(JSON.stringify({ event: 'command', func, args: [] }), '*');
-        if (kind === 'restart') { w.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [0, true] }), '*'); w.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'); }
-      } else if (t.v.p === 't') {
-        w.postMessage({ type: kind === 'unmute' ? 'unMute' : kind === 'restart' ? 'play' : kind, 'x-tiktok-player': true }, '*');
-      }
-    } catch (e) {}
+    if (!t || !t.ready) return;
+    if (t.v.p === 'y') {
+      const p = t.yt; if (!p) return;
+      if (kind === 'play') p.playVideo(); else if (kind === 'pause') p.pauseVideo();
+      else if (kind === 'mute') p.mute(); else if (kind === 'unmute') p.unMute();
+      else if (kind === 'restart') { p.seekTo(0, true); p.playVideo(); }
+    } else if (t.v.p === 't') {
+      if (kind === 'restart') { tk(t, 'seekTo', 0); tk(t, 'play'); }
+      else tk(t, kind === 'unmute' ? 'unMute' : kind);
+    }
   }
-  // Start the live clip; repeat a couple of times because players can ignore the very first message.
   function wake(t, restart = true) {
-    if (!t) return;
+    if (!t || !t.v) return;
     clearTimeout(t.timer);
-    const go = n => {
-      if (!t.el.classList.contains('live')) return;
-      send(t, sound ? 'unmute' : 'mute'); send(t, restart && n === 2 ? 'restart' : 'play');
-      if (n) t.timer = setTimeout(() => go(n - 1), 600);
-    };
-    go(2);
+    if (!t.ready) return; // onReady / load will call wake again
+    send(t, sound ? 'unmute' : 'mute');
+    send(t, restart ? 'restart' : 'play');
+    if (t.v.p === 't') t.timer = setTimeout(() => { if (isLive(t)) { send(t, sound ? 'unmute' : 'mute'); send(t, 'play'); } }, 600);
   }
-  function sleep(t) { clearTimeout(t.timer); send(t, 'mute'); send(t, 'pause'); }
+  function sleep(t) { clearTimeout(t.timer); markPlaying(t, false); send(t, 'mute'); send(t, 'pause'); }
   const liveTile = () => tiles.get(keyOf(cx, cy));
   function cmd(kind) { const t = liveTile(); if (kind === 'play') wake(t, false); else send(t, kind); }
+
+  function dropTile(t) { clearTimeout(t.timer); try { t.yt && t.yt.destroy(); } catch (e) {} t.el.remove(); }
 
   let preloadT = [];
   function build() {
@@ -296,19 +369,19 @@ const DEFAULT_LINKS = [
       let t = tiles.get(k);
       if (!t) { t = makeTile(cx + dx, cy + dy); tiles.set(k, t); grid.appendChild(t.el); }
       t.el.style.transform = `translate(${dx * 100}%,${dy * 100}%)`;
-      const live = !dx && !dy;
-      const was = t.el.classList.contains('live');
+      const live = !dx && !dy, was = isLive(t);
       t.el.classList.toggle('live', live);
-      if (live) { if (t.frame) { if (!was) wake(t); } else attachPlayer(t, true); }
+      if (live) { if (t.frame) { if (!was) wake(t); } else attachPlayer(t); }
       else if (was) sleep(t);
     }
-    for (const [k, t] of tiles) if (!want.has(k)) { clearTimeout(t.timer); t.el.remove(); tiles.delete(k); }
+    for (const [k, t] of tiles) if (!want.has(k)) { dropTile(t); tiles.delete(k); }
 
-    // Warm up neighbours: straight moves first, diagonals a bit later, so the live clip gets bandwidth first.
+    // Buffer neighbours: straight moves right away, diagonals a moment later so the live clip gets bandwidth first.
     preloadT.forEach(clearTimeout);
+    const warm = list => list.forEach(([dx, dy]) => { const t = tiles.get(keyOf(cx + dx, cy + dy)); if (t) attachPlayer(t); });
     preloadT = [
-      setTimeout(() => [[0, 1], [0, -1], [1, 0], [-1, 0]].forEach(([dx, dy]) => { const t = tiles.get(keyOf(cx + dx, cy + dy)); if (t) attachPlayer(t, false); }), 300),
-      setTimeout(() => [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(([dx, dy]) => { const t = tiles.get(keyOf(cx + dx, cy + dy)); if (t) attachPlayer(t, false); }), 1200),
+      setTimeout(() => warm([[0, 1], [0, -1], [1, 0], [-1, 0]]), 150),
+      setTimeout(() => warm([[1, 1], [1, -1], [-1, 1], [-1, -1]]), 1500),
     ];
 
     paused = false;
@@ -318,7 +391,7 @@ const DEFAULT_LINKS = [
     const open = $('openBtn');
     if (v) { open.href = linkOf(v); open.hidden = false; } else open.hidden = true;
   }
-  function resetTiles() { for (const t of tiles.values()) { clearTimeout(t.timer); t.el.remove(); } tiles.clear(); }
+  function resetTiles() { for (const t of tiles.values()) dropTile(t); tiles.clear(); }
 
   function drawMap() {
     const map = $('map'); map.textContent = '';
@@ -439,7 +512,7 @@ const DEFAULT_LINKS = [
   function shareUrl(list) { const u = new URL(location.href); u.search = list.length ? '?v=' + list.map(token).join(',') : ''; u.hash = ''; return u.toString(); }
   $('saveBtn').addEventListener('click', () => {
     const good = renderChips();
-    videos = good; resetTiles(); cx = cy = 0; visited.clear(); visited.add('0,0');
+    videos = good; indexVideos(); resetTiles(); cx = cy = 0; visited.clear(); visited.add('0,0');
     history.replaceState(null, '', shareUrl(videos));
     panel.hidden = true; build();
     toast(`${videos.length} videos loaded`);
