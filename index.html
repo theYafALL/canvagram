@@ -139,8 +139,30 @@ button{font:inherit;color:inherit}
 </div>
 
 <script>
-/* Edit this list to change the videos everyone sees when there's no list in the link. */
-const DEFAULT_LINKS = [];
+/* Starter list everyone sees when the link has no ?v= list. Accepts full links or y:ID / t:ID / i:CODE.
+   Found via web search on 2026-11-03; a few may be removed or block embedding over time. */
+const DEFAULT_LINKS = [
+  'y:99jujUazHZY', 'y:PfrqdnsggjU', 'y:8K0b3aVGGUk', 't:7429924872454769951', 'y:T0ITJt_6CPA', 't:7377380264403684650',
+  'y:enLQlTMXVGE', 'y:dRSsc8npnqU', 'y:jeaPVhp2aKk', 'y:q_2lLod0kKE', 'y:KwZpYLrRR3o', 'y:DkfWSgF_k4Y',
+  'y:gk90aNvGXgs', 'y:XN9Ln5c0UvQ', 'y:S0oxDNxg3Po', 'y:puzI2oB2XjU', 'y:VyAOB-X6wgk', 'y:wVQrh5A8C6g',
+  'y:q0lutuj76ts', 'y:A4sQ3LCmUKU', 'y:FvahTVvzNDU', 'y:9ZtV2alTjdg', 'y:0naj4fw3yEY', 'y:JXqfZVM9CCk',
+  't:7375281998912490798', 'y:JAaT_eO182Q', 'y:iU9ymCkOpls', 'y:DOoooYs9d2M', 'y:WSvRrANHG9g', 'y:Zq_hbllja6E',
+  'y:K4nMGOFj0yY', 't:7588205102926761247', 't:7521067006234299678', 'y:MO_ctioen_s', 'y:EXueS4q1LGE', 'y:z5s4zTu6DP0',
+  't:7341470837029047595', 'y:3u5w_D2MeXM', 'y:9N21pb2sHno', 'y:9XOnh7sHS9Q', 'y:vGisUB7yz38', 'y:gV8VvJpNjCU',
+  'y:cYr5lQbmQ7I', 'y:NgSBLMjDPSg', 'y:ETwRGo9RpHI', 'y:kQ7wDHRzSfg', 'y:ExtHCWofnIE', 'y:dJH-K_uLGWk',
+  'y:Elmk3Jm7s6Y', 'y:bD8y25DX3J8', 'y:sLciensaBI4', 'y:QA-9-g7shdY', 't:7430114858445671722', 'y:4DmYAQ_tSws',
+  'y:zgjto-sw0HI', 'y:CSANojnv4Nk', 'y:Sx3vlF_rXBU', 'y:EwJ00RcpcdY', 'y:ZvzTC4MWy7w', 'y:CSNtbiHSsOk',
+  'y:c3_q5sz3R1s', 'y:z2iDzfmH6Yw', 'y:NtkhYL05Luc', 'y:K0Hm38ufMB0', 'y:gnlU-zE28rU', 'y:lWSyIPrxaKg',
+  't:7692097714263182625', 'y:MgpdT8YCzWE', 'y:qablW71wa0E', 'y:IQ6_UKE0gnc', 'y:FsWL-Usv9Vo', 'y:82FcszGAVu0',
+  'y:GzBvLodjsq8', 'y:4VoFs8US7qI', 'y:Yfn7g7ftk7Y', 'y:s54-cbheuUU', 'y:hh2w_MYwS28', 'y:0HVbVGq2C1o',
+  'y:XsACZn8rIoU', 'y:cfKQCQ9LT50', 'y:czodw2xl-M4', 'y:x9pEJtMsKcY', 'y:jnHFWcCdyio', 't:7475215588571286814',
+  't:7487014060903402782', 'y:snIeRZG8MeA', 'y:rc2VZIl7pQw', 'y:FFADS64-0wo', 'y:6Tzv6zF4mp8', 'y:Qn-uN1YjtFE',
+  'y:ntDaGCxVcfc', 'y:6eMt42oIWpo', 'y:3e7GJU9m8KY', 'y:cnPAcwl0sm4', 'y:QwtnBxrlaxg', 'y:m6hpFWAp75A',
+  'y:2UNTeEAt51U', 'y:eoklkoLnTXI', 'y:jqwZj6rmzOs', 'y:KJcU40drD4k', 'y:Nuk3derFSlw', 'y:77XUBE7Z4F0',
+  'y:htmVEH2TMGM', 'y:e-7Glg4FJQw', 'y:ZEtC_WsmvVY', 'y:R-z8A8U_bw4', 'y:jRERHyh-PG4', 'y:7c7vvNBLIAQ',
+  'y:T7LKZBQi7Js', 'y:NjZ1YEK_fv0', 'y:UiC6lC0Iob4', 'y:imihQht9Y1s', 'y:lDHu0x3fiyw', 'y:_Vw16Yc5-_s',
+  'y:hJ3InzJJpYw', 'y:EioOXLJalQg', 'y:Mhl0nbv0n9o', 'y:wkLHzw-9ceU',
+];
 
 (() => {
   const $ = id => document.getElementById(id);
